@@ -25,6 +25,10 @@ class Point(NamedTuple):
         """
         return abs(self.x) + abs(self.y)
 
+    @classmethod
+    def origin(cls):
+        return cls(0, 0)
+
 class Line(NamedTuple):
     a: Point
     b: Point
@@ -121,10 +125,20 @@ class Wire:
         """
         wire_path = wire.strip().split(',')
         points = [self._parse_wire_path(w.strip()) for w in wire_path]
-        self.coords = list(accumulate(points))
+        points.insert(0, Point(0, 0))
+        coords = list(accumulate(points))
+        self.lines = []
+        for i in range(1, len(coords)):
+            a: Point = coords[i-1]
+            b: Point = coords[i]
+            line = Line(a, b)
+            self.lines.append(line)
     
     def __repr__(self):
-        return str(self.coords)
+        return str(self.lines)
+
+    def __iter__(self):
+        return iter(self.lines)
 
     def _parse_wire_path(self, s: str) -> Point:
         """
@@ -146,3 +160,17 @@ def get_wires(file: str) -> Tuple[Wire, Wire]:
         wires = f.read().strip().split('\n')
 
     return Wire(wires[0]), Wire(wires[1])
+
+if __name__ == '__main__':
+    wire_a, wire_b = get_wires('input.txt')
+    origin: Point = Point.origin()
+
+    intersections = []
+    for la in wire_a:
+        for lb in wire_b:
+            point: Point = la.intersect(lb)
+            if (point is not None) and (point != origin):
+                intersections.append(point)
+
+    distances = sorted([i.manhattan_distance() for i in intersections])
+    print(f'Manhattan Distance: {distances[0]}')
