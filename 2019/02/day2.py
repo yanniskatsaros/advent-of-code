@@ -1,4 +1,4 @@
-import os
+import os, argparse
 from typing import List, Optional
 
 def get_input(file: str) -> List[int]:
@@ -35,7 +35,7 @@ def intcode_step(program: List[int], i: int) -> List[int]:
     
     return program
 
-def main(file: str) -> None:
+def main(file: str, a: int, b: int) -> None:
     """
     Restore the gravity assist program
     and run the "Intcode" computer.
@@ -44,8 +44,8 @@ def main(file: str) -> None:
     n = len(prog)
 
     # first, restore the gravity assist program
-    prog[1] = 12
-    prog[2] = 2
+    prog[1] = a
+    prog[2] = b
 
     for i in range(0, n, 4):
         op = prog[i]
@@ -55,5 +55,22 @@ def main(file: str) -> None:
 
     print(f'Program position 0: {prog[0]}')
 
+def parser_factory() -> argparse.ArgumentParser:
+    """
+    Argument parser factory for the CLI
+    """
+    p = argparse.ArgumentParser(
+        description='Run the Day 2 Advent of Code solution.'
+    )
+    p.add_argument('file', type=str, help='Path to the input file')
+    p.add_argument('a', type=int, help='noun')
+    p.add_argument('b', type=int, help='verb')
+
+    return p
+
 if __name__ == '__main__':
-    main('input.txt')
+    parser = parser_factory()
+    args = parser.parse_args()
+    # answer: a = 62, b = 55
+    # final answer: 100*62 + 55 = 6255
+    main(args.file, args.a, args.b)
