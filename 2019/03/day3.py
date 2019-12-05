@@ -118,10 +118,13 @@ class Wire:
 
         Examples
         --------
-        >>> wire_str = 'U7,R6,D4,L4'
-        >>> wire = Wire(wire_str)
+        >>> wire = Wire('U7,R6,D4,L4')
         >>> print(wire)
-        >>> [Point(0, 7), Point(6, 7), Point(6, 3), Point(2, 3)]
+        [Line(a=Point(x=0, y=0), b=Point(x=0, y=7))
+         Line(a=Point(x=0, y=7), b=Point(x=6, y=7))
+         Line(a=Point(x=6, y=7), b=Point(x=6, y=3))
+         Line(a=Point(x=6, y=3), b=Point(x=2, y=3))]
+
         """
         wire_path = wire.strip().split(',')
         points = [self._parse_wire_path(w.strip()) for w in wire_path]
@@ -165,7 +168,7 @@ if __name__ == '__main__':
     wire_a, wire_b = get_wires('input.txt')
     origin: Point = Point.origin()
 
-    intersections = []
+    intersections: List[Point] = []
     for la in wire_a:
         for lb in wire_b:
             point: Point = la.intersect(lb)
