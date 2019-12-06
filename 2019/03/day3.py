@@ -1,5 +1,5 @@
 import os
-from typing import NamedTuple, Tuple, Optional
+from typing import NamedTuple, Tuple, List, Optional
 from itertools import accumulate
 
 class Point(NamedTuple):
@@ -36,6 +36,9 @@ class Line(NamedTuple):
     def __eq__(self, other):
         return (self.a == other.a) and (self.b == other.b)
 
+    def __len__(self) -> int:
+        return self.length()
+
     def x_range(self) -> range: 
         """The mathematical domain of x-values for the line"""
         bounds = sorted([self.a.x, self.b.x])
@@ -44,7 +47,11 @@ class Line(NamedTuple):
     def y_range(self) -> range: 
         """The mathematical range of y-values for the line"""
         bounds = sorted([self.a.y, self.b.y])
-        return range(bounds[0], bounds[1] + 1) 
+        return range(bounds[0], bounds[1] + 1)
+
+    def length(self) -> int:
+        """Computes the length of the 1D line"""
+        return len(self.x_range()) + len(self.y_range()) - 2
 
     def is_vertical(self) -> bool:
         """
@@ -103,7 +110,37 @@ class Line(NamedTuple):
         return _intersect_horizontal()
 
 class Wire:
-    def __init__(self, wire: str):
+    def __init__(self, lines: List[Line]):
+        """
+        Create a Wire object from an iterable of Lines
+
+        Parameters
+        ----------
+        lines : List[Line]
+            An iterable of each line in the wire
+
+        Examples
+        --------
+        >>> lines = [
+         Line(a=Point(x=0, y=0), b=Point(x=0, y=7))
+         Line(a=Point(x=0, y=7), b=Point(x=6, y=7))
+         Line(a=Point(x=6, y=7), b=Point(x=6, y=3))
+         Line(a=Point(x=6, y=3), b=Point(x=2, y=3))]
+        ]
+        >>> wire = Wire('U7,R6,D4,L4')
+        >>> print(wire)
+        [Line(a=Point(x=0, y=0), b=Point(x=0, y=7))
+         Line(a=Point(x=0, y=7), b=Point(x=6, y=7))
+         Line(a=Point(x=6, y=7), b=Point(x=6, y=3))
+         Line(a=Point(x=6, y=3), b=Point(x=2, y=3))]
+
+        """
+        self.lines = lines
+        self.cumlength = list(accumulate([len(l) for l in lines]))
+    
+
+    @classmethod
+    def from_string(cls, wire: str):
         """
         Create a Wire object from a comma delimited
         string specifying the wire path (coordinates).
@@ -118,7 +155,7 @@ class Wire:
 
         Examples
         --------
-        >>> wire = Wire('U7,R6,D4,L4')
+        >>> wire = Wire.from_string('U7,R6,D4,L4')
         >>> print(wire)
         [Line(a=Point(x=0, y=0), b=Point(x=0, y=7))
          Line(a=Point(x=0, y=7), b=Point(x=6, y=7))
@@ -127,23 +164,31 @@ class Wire:
 
         """
         wire_path = wire.strip().split(',')
-        points = [self._parse_wire_path(w.strip()) for w in wire_path]
-        points.insert(0, Point(0, 0))
+        points = [Point(0, 0)]
+        points.extend([cls._parse_wire_path(w.strip()) for w in wire_path])
         coords = list(accumulate(points))
-        self.lines = []
-        for i in range(1, len(coords)):
-            a: Point = coords[i-1]
-            b: Point = coords[i]
-            line = Line(a, b)
-            self.lines.append(line)
-    
+        lines = [Line(coords[i-1], coords[i]) for i in range(1, len(coords))]
+        return cls(lines)
+   
     def __repr__(self):
         return str(self.lines)
 
     def __iter__(self):
         return iter(self.lines)
 
-    def _parse_wire_path(self, s: str) -> Point:
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return self.lines[key]
+        elif isinstance(key, slice):
+            return Wire(self.lines[key])
+        else:
+            raise KeyError('Invalid key for type: Wire')
+
+    def __len__(self) -> int:
+        return self.cumlength[-1]
+
+    @staticmethod
+    def _parse_wire_path(s: str) -> Point:
         """
         Parses a wire path string such as "U7" or "L4"
         """
@@ -158,13 +203,17 @@ class Wire:
         }
         return DIR_MAP[direction]
 
+class Intersection(NamedTuple):
+    point: Point
+    steps: int
+
 def get_wires(file: str) -> Tuple[Wire, Wire]:
     with open(file, 'r') as f:
         wires = f.read().strip().split('\n')
 
-    return Wire(wires[0]), Wire(wires[1])
+    return Wire.from_string(wires[0]), Wire.from_string(wires[1])
 
-if __name__ == '__main__':
+def main_part_1() -> int:
     wire_a, wire_b = get_wires('input.txt')
     origin: Point = Point.origin()
 
@@ -175,5 +224,41 @@ if __name__ == '__main__':
             if (point is not None) and (point != origin):
                 intersections.append(point)
 
-    distances = sorted([i.manhattan_distance() for i in intersections])
-    print(f'Manhattan Distance: {distances[0]}')
+    min_distance = min([i.manhattan_distance() for i in intersections])
+    return min_distance 
+
+def main_part_2() -> int:
+    wire_a, wire_b = get_wires('input.txt')
+    origin: Point = Point.origin()
+    
+    intersections: List[Intersection] = []
+    for ia, la in enumerate(wire_a):
+        for ib, lb in enumerate(wire_b):
+            point: Point = la.intersect(lb)
+            if (point is None) or (point == origin):
+                continue
+
+            la_prev: Line = wire_a[ia-1]
+            lb_prev: Line = wire_b[ib-1]
+
+            if la.is_vertical():
+                a_len = abs(point.y - la_prev.b.y)
+                b_len = abs(point.x - lb_prev.b.x)
+            else:
+                a_len = abs(point.x - la_prev.b.x)
+                b_len = abs(point.y - lb_prev.b.y)
+            
+            total_a = a_len + len(wire_a[0:ia])
+            total_b = b_len + len(wire_b[0:ib])
+            inter = Intersection(point, total_a + total_b)
+            intersections.append(inter)
+
+    min_steps = min(intersections, key=lambda x: x.steps)
+    return min_steps.steps
+
+if __name__ == '__main__':
+    min_distance = main_part_1()
+    min_steps = main_part_2()
+
+    print(f'Min. Manhattan Distance: {min_distance}')
+    print(f'Min. Total Steps: {min_steps}')
