@@ -25,10 +25,31 @@ def validate_password(pwd: int) -> Tuple[bool, int]:
         return True, next_pwd
     return False, next_pwd 
 
-def count_valid_passwords(start: int, end: int) -> int:
+def validate_again(pwd: int) -> bool:
+    """
+    Additional validation required for Part 2
+    """
+    text = str(pwd)
+    d_prev = int(text[0])
+    streaks = []
+    streak = 1
+
+    for d in text[1:]:
+        d = int(d)
+        if d == d_prev:
+            streak += 1
+        else:
+            streaks.append(streak)
+            streak = 1
+        d_prev = d
+    
+    streaks.append(streak)
+    return True if 2 in streaks else False
+
+def count_valid_passwords_1(start: int, end: int) -> int:
     """
     Counts the number of valid passwords in the given
-    range of values.
+    range of values - Part 1 solution.
     """
     pwd: int = start
     counter: int = 0
@@ -36,6 +57,22 @@ def count_valid_passwords(start: int, end: int) -> int:
         keep, pwd = validate_password(pwd)
         if keep:
             counter += 1
+    return counter
+
+def count_valid_passwords_2(start: int, end: int) -> int:
+    """
+    Counts the number of valid passwords in the given
+    range of values - Part 2 solution.
+    """
+    pwd: int = start
+    counter: int = 0
+    while (pwd <= end):
+        keep, next_pwd = validate_password(pwd)
+
+        if keep and validate_again(pwd):
+            counter += 1
+        pwd = next_pwd
+
     return counter
 
 def parser_factory():
@@ -54,5 +91,9 @@ if __name__ == '__main__':
     parser = parser_factory()
     args = parser.parse_args()
 
-    counts = count_valid_passwords(args.start, args.end)
-    print(f'Number of Valid Passwords: {counts}')
+    counts_1 = count_valid_passwords_1(args.start, args.end)
+    counts_2 = count_valid_passwords_2(args.start, args.end)
+    print('Number of Valid Passwords:')
+    print(f'Part 1: {counts_1}')
+    print(f'Part 2: {counts_2}')
+
