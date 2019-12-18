@@ -41,6 +41,7 @@ class Intcode:
         self.mem: List[int] = memory
         self.i = 0  # instruction pointer
         self.stdin = []
+        self.stdout = []
         self.end = False  # flag that program has ended running
 
     def run(self, stdin: int) -> int:
@@ -86,12 +87,9 @@ class Intcode:
         int
         """
         addr = self.mem[i]
-        _map = {
-            0 : self.mem[addr],
-            1 : m
-        }
-        return _map[m]
-
+        if m == 0:
+            return self.mem[addr]
+        return m
 
     def _instruction(self, ix: Instruction) -> None:
         """
@@ -120,12 +118,13 @@ class Intcode:
         def _emit(mode: Mode) -> None:
             addr: int = self.mem[self.i+1]
             v: int = self.mem[addr]
+            self.stdout.append((self.i, v))
             self.i += 2
-            print(v)
 
         def _end(mode: Mode) -> None:
             self.i += 1
             self.end = True
+            print(self.stdout)
             return
 
         instruction_map = {
