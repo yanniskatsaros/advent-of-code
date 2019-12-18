@@ -65,7 +65,10 @@ class Intcode:
         while not self.end:
             instruction: int = self.mem[self.i]
             ix: Instruction = parse_instruction(instruction)
-            self._instruction(ix)
+            self._execute(ix)
+
+        # finally print the values emitted to "stdout"
+        print(' '.join([str(v) for v in self.stdout]))
 
     def _mode_value(self, i: int, m: int) -> int:
         """
@@ -91,9 +94,9 @@ class Intcode:
             return self.mem[addr]
         return m
 
-    def _instruction(self, ix: Instruction) -> None:
+    def _execute(self, ix: Instruction) -> None:
         """
-        Perform the instruction with the given parameter modes
+        Execute the instruction with the given parameter modes
         """
 
         def _add(mode: Mode) -> None:
@@ -118,13 +121,12 @@ class Intcode:
         def _emit(mode: Mode) -> None:
             addr: int = self.mem[self.i+1]
             v: int = self.mem[addr]
-            self.stdout.append((self.i, v))
+            self.stdout.append(v)
             self.i += 2
 
         def _end(mode: Mode) -> None:
             self.i += 1
             self.end = True
-            print(self.stdout)
             return
 
         instruction_map = {
