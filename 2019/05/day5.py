@@ -22,7 +22,7 @@ class Instruction(NamedTuple):
     opcode: int
     mode: Mode
 
-def parse_instruction(instruction) -> Instruction:
+def parse_instruction(instruction: int) -> Instruction:
     ix = str(instruction)
     n = len(ix)
     opcode = int(ix[-2:])
@@ -89,10 +89,10 @@ class Intcode:
         -------
         int
         """
-        addr = self.mem[i]
         if m == 0:
+            addr = self.mem[i]
             return self.mem[addr]
-        return m
+        return i
 
     def _execute(self, ix: Instruction) -> None:
         """
@@ -119,8 +119,7 @@ class Intcode:
             self.i += 2
 
         def _emit(mode: Mode) -> None:
-            addr: int = self.mem[self.i+1]
-            v: int = self.mem[addr]
+            v = self._mode_value(self.i+1, mode.p1)
             self.stdout.append(v)
             self.i += 2
 
