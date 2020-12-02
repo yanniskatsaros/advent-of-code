@@ -54,6 +54,7 @@ def read_input(path: Path) -> List[str]:
     return lines
 
 if __name__ == '__main__':
+    # input: https://adventofcode.com/2020/day/2/input
     path = Path(sys.argv[1]).resolve()
     passwords = read_input(path)
     count = main(passwords)
