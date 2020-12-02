@@ -1,2 +1,4 @@
-# Advent of Code
-Solutions to Advent of Code 2019 in Python 3.8
+# :christmas_tree: Advent of Code :bell:
+
+Let's see how far I get this year...
+
