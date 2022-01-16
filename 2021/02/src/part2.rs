@@ -4,6 +4,7 @@ use crate::utils;
 struct Submarine {
     position: i32,
     depth: i32,
+    aim: i32,
 }
 
 impl Submarine {
@@ -14,7 +15,7 @@ impl Submarine {
             .expect("Missing value from instruction.")
             .parse()
             .expect("Value must be an integer type.");
-
+        
         // if there are not exactly two instructions, panic
         match iter.next() {
             None => (),
@@ -22,19 +23,28 @@ impl Submarine {
         }
 
         match cmd {
-            "forward" => self.position += value,
-            "down" => self.depth += value,
-            "up" => self.depth -= value,
+            "forward" => {
+                self.position += value;
+                self.depth += self.aim * value;
+            },
+            "down" => self.aim += value,
+            "up" => self.aim -= value,
             other => panic!("Invalid command found: {}", other),
+        }
+    }
+
+    fn new() -> Submarine {
+        Submarine {
+            position: 0,
+            depth: 0,
+            aim: 0,
         }
     }
 }
 
-
 pub fn main() {
-    println!("Day 2 - Part I");
-    let mut sub = Submarine { position: 0, depth: 0 };
-    println!("{:?}", sub);
+    println!("Day 2 - Part II");
+    let mut sub = Submarine::new();
 
     let instructions = utils::read_input();
     for line in instructions {
