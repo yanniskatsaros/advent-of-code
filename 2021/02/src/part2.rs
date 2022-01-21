@@ -1,3 +1,8 @@
+use crate::parse::{
+    Command,
+    CommandLine,
+    ParseError,
+};
 use crate::utils;
 
 #[derive(Debug)]
@@ -8,31 +13,6 @@ struct Submarine {
 }
 
 impl Submarine {
-    fn parse_instruction(&mut self, s: &String) {
-        let mut iter = s.split_whitespace();
-        let cmd = iter.next().expect("Missing command from instruction.");
-        let value: i32 = iter.next()
-            .expect("Missing value from instruction.")
-            .parse()
-            .expect("Value must be an integer type.");
-        
-        // if there are not exactly two instructions, panic
-        match iter.next() {
-            None => (),
-            Some(extra) => panic!("Too many instructions found: {}", extra)
-        }
-
-        match cmd {
-            "forward" => {
-                self.position += value;
-                self.depth += self.aim * value;
-            },
-            "down" => self.aim += value,
-            "up" => self.aim -= value,
-            other => panic!("Invalid command found: {}", other),
-        }
-    }
-
     fn new() -> Submarine {
         Submarine {
             position: 0,
@@ -40,16 +20,32 @@ impl Submarine {
             aim: 0,
         }
     }
+
+    fn run(&mut self, cmd: &CommandLine) {
+        match cmd {
+            CommandLine(Command::Forward, value) => {
+                self.position += value;
+                self.depth += self.aim * value;
+            },
+            CommandLine(Command::Down, value) => self.aim += value,
+            CommandLine(Command::Up, value) => self.aim -= value,
+        }
+    }
 }
 
-pub fn main() {
+pub fn main() -> Result<(), ParseError>{
     println!("Day 2 - Part II");
     let mut sub = Submarine::new();
 
-    let instructions = utils::read_input();
-    for line in instructions {
-        sub.parse_instruction(&line);
+    let instructions = utils::read_input().iter()
+        .map(|s| CommandLine::parse(s))
+        .collect::<Result<Vec<_>, _>>()?;
+    
+    for i in &instructions {
+        sub.run(i);
     }
     println!("{:?}", sub);
     println!("Answer = {}", sub.depth * sub.position);
+
+    Ok(())
 }
