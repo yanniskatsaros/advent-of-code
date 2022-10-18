@@ -5,15 +5,15 @@
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github yanniskatsaros/advent-of-code))
 
-(authors "Author Name")
+(authors "Yannis Katsaros")
 
-(maintainers "Maintainer Name")
+(maintainers "Yannis Katsaros")
 
-(license LICENSE)
+(license GPL-3.0)
 
-(documentation https://url/to/documentation)
+(documentation https://github.com/yanniskatsaros/advent-of-code)
 
 (package
  (name aoc)
@@ -21,6 +21,6 @@
  (description "A longer description")
  (depends ocaml dune)
  (tags
-  (topics "to describe" your project)))
+  ("ocaml" "advent-of-code")))
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/dune-files.html#dune-project
