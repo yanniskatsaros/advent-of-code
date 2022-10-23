@@ -9,13 +9,14 @@ let part1 () =
   let open Cpu in
 
   let memory = Memory.copy mem in
-  let cpu = (Cpu.init memory) in
+  let io = Io.init () in
+  let cpu = (Cpu.init memory io) in
 
   (* initialize the memory as specified in Day 2 *)
   memory.$(1) <- 12 ;
   memory.$(2) <- 2;
 
-  match run cpu with
+  match Instruction.run cpu with
   | Ok () ->
     Printf.printf "%d\n" cpu.mem.$(0)
   | Error s ->
@@ -27,6 +28,9 @@ let part2 () =
   let open Memory in
   let open Cpu in
 
+  (* IO isn't used yet in Day 2 *)
+  let io = Io.init () in
+
   (* loop through all 100x100 combinations,
      initializing fresh memory each time *)
   try
@@ -35,9 +39,9 @@ let part2 () =
         let memory = Memory.copy mem in
         memory.$(1) <- i;
         memory.$(2) <- j;
-        let cpu = (Cpu.init memory) in
+        let cpu = (Cpu.init memory io) in
 
-        match run cpu with
+        match Instruction.run cpu with
         | Ok () ->
           if cpu.mem.$(0) = 19690720
             then raise (Done (i, j))
