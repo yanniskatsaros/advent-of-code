@@ -1,5 +1,6 @@
 type t =
   { mutable memory: int array }
+  [@@deriving show]
 
 let ( .$() ) mem idx =
   mem.memory.(idx)
@@ -21,9 +22,16 @@ let copy { memory } =
 let of_list items =
   { memory = Array.of_list items }
 
+
+let of_string str =
+  str
+    |> String.trim
+    |> String.split_on_char ','
+    |> List.map (
+      fun s -> s |> Float.of_string |> Int.of_float
+    )
+    |> of_list
+
 let of_file file =
   let contents = In_channel.with_open_bin file In_channel.input_all in
-  let lines = String.split_on_char ',' (String.trim contents) in
-  lines
-    |> List.map (fun s -> Int.of_float (Float.of_string s))
-    |> of_list
+  of_string contents
