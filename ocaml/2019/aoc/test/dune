@@ -1,2 +1,3 @@
 (test
- (name aoc))
+ (name aoc)
+ (libraries aoc))
