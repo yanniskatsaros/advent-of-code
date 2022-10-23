@@ -50,7 +50,7 @@ let part2 () =
       done
     done;
   with Done (x, y) ->
-    Printf.printf "%d\n" (100 * x + y)
+    Printf.printf "[%d] (x=%d, y=%d)\n" (100 * x + y) x y
 
 
 let () =
