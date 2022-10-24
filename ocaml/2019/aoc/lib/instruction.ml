@@ -5,11 +5,20 @@ type loc =
   | Imm of int
   [@@deriving show]
 
+
+type dst =
+  | Dst of int
+  [@@deriving show]
+
 type t =
   | Add of (loc * loc * loc)
   | Mul of (loc * loc * loc)
   | Inp of (int * loc)
   | Out of loc
+  | Jt of (loc * loc)
+  | Jf of (loc * loc)
+  | Lt of (loc * loc * dst)
+  | Eq of (loc * loc * dst)
   | Hlt
   [@@deriving show]
 
@@ -63,12 +72,41 @@ let decode ({ ip; mem; io } as cpu) =
     Out p1
   in
 
+  let decode_jt () =
+    let p1 = decode_param 1 mode1 in
+    let p2 = decode_param 2 mode2 in
+    Jt (p1, p2)
+  in
+
+  let decode_jf () =
+    let p1 = decode_param 1 mode1 in
+    let p2 = decode_param 2 mode2 in
+    Jf (p1, p2)
+  in
+
+  let decode_lt () =
+    let p1 = decode_param 1 mode1 in
+    let p2 = decode_param 2 mode2 in
+    let dst = Dst (mem.$(ip + 3)) in
+    Lt (p1, p2, dst)
+  in
+
+  let decode_eq () =
+    let p1 = decode_param 1 mode1 in
+    let p2 = decode_param 2 mode2 in
+    let dst = Dst (mem.$(ip + 3)) in
+    Eq (p1, p2, dst)
+  in
+
   match op with
     | 1 -> decode_add ()
     | 2 -> decode_mul ()
     | 3 -> decode_inp ()
     | 4 -> decode_out ()
-    | 99 -> Hlt
+    | 5 -> decode_jt ()
+    | 6 -> decode_jf ()
+    | 7 -> decode_lt ()
+    | 8 -> decode_eq ()
     | n -> raise (Invalid_argument (Printf.sprintf "invalid opcode: %d" n))
 
 let eval cpu instr =
@@ -110,6 +148,38 @@ let eval cpu instr =
       let i = get i in
       Io.write_stdout cpu.io i ;
       cpu.ip <- cpu.ip + 2
+    | Jt (p1, p2) ->
+      let p1 = get p1 in
+      let p2 = get p2 in
+      begin match p1 with
+        | 0 -> cpu.ip <- cpu.ip + 3
+        | _ -> cpu.ip <- p2
+      end
+    | Jf (p1, p2) ->
+      let p1 = get p1 in
+      let p2 = get p2 in
+      begin match p1 with
+        | 0 -> cpu.ip <- p2
+        | _ -> cpu.ip <- cpu.ip + 3
+      end
+    | Lt (p1, p2, Dst dst) ->
+      let p1 = get p1 in
+      let p2 = get p2 in
+      let value = match p1 < p2 with
+        | true -> 1
+        | false -> 0
+      in
+      cpu.mem.$(dst) <- value;
+      cpu.ip <- cpu.ip + 4
+    | Eq (p1, p2, Dst dst) ->
+      let p1 = get p1 in
+      let p2 = get p2 in
+      let value = match p1 = p2 with
+        | true -> 1
+        | false -> 0
+      in
+      cpu.mem.$(dst) <- value;
+      cpu.ip <- cpu.ip + 4
 
 let rec run cpu =
   try
