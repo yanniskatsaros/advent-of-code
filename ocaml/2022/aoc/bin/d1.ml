@@ -27,6 +27,7 @@ let part1 str =
 let part2 str =
   let top3 = parse_input str
     |> List.map sum
+    (* sorts in descending rather than ascending order *)
     |> List.sort (fun x y -> - (compare x y))
     |> take 3
   in
