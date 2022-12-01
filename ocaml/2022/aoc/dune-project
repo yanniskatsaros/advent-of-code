@@ -1,0 +1,26 @@
+(lang dune 3.6)
+
+(name aoc)
+
+(generate_opam_files true)
+
+(source
+ (github yanniskatsaros/advent-of-code))
+
+(authors "Yannis Katsaros")
+
+(maintainers "Yannis Katsaros")
+
+(license GPL-3.0)
+
+(documentation https://github.com/yanniskatsaros/advent-of-code)
+
+(package
+ (name aoc)
+ (synopsis "Solutions to Advent of Code 2022")
+ (description "Solutions to Advent of Code 2022")
+ (depends ocaml dune)
+ (tags
+  ("ocaml" "advent-of-code")))
+
+; See the complete stanza docs at https://dune.readthedocs.io/en/stable/dune-files.html#dune-project
