@@ -19,13 +19,29 @@ let parse_input str =
 
 
 let part1 str =
-  let sum = List.fold_left ( + ) 0 in
-
   parse_input str
-  |> List.map sum
-  |> fun lst -> List.fold_right max lst 0
+    |> List.map sum
+    |> fun lst -> List.fold_right max lst 0
+
+
+let part2 str =
+  let top3 = parse_input str
+    |> List.map sum
+    |> List.sort (fun x y -> - (compare x y))
+    |> take 3
+  in
+  match top3 with
+    | None -> None
+    | Some xs -> Some (sum xs)
 
 
 let () =
-  let p1 = part1 (read_file Sys.argv.(1)) in
-  Format.printf "Part 1: %d\n" p1
+  let input = read_file Sys.argv.(1) in
+
+  Format.printf "Part 1: %d\n" (part1 input) ;
+
+  match part2 input with
+    | None -> Format.printf "something went wrong"
+    | Some total ->
+      Format.printf "Part 2: %d\n" total;
+  ()
