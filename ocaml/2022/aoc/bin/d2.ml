@@ -5,7 +5,12 @@ type rpc =
   | Pap
   | Sci
 
-let decode s =
+type outcome =
+  | Win
+  | Lose
+  | Draw
+
+let decode1 s =
   if (String.length s) <> 3
     then failwith (Format.sprintf "invalid instruction: %s" s)
     else
@@ -42,15 +47,59 @@ let score (opp, self) =
   in
   score + outcome
 
+let decode2 s =
+  if (String.length s) <> 3
+    then failwith (Format.sprintf "invalid instruction: %s" s)
+    else
+
+  let opp_decoder = function
+    | 'A' -> Roc
+    | 'B' -> Pap
+    | 'C' -> Sci
+    | other -> failwith (Format.sprintf "unknown char: %c" other)
+  in
+
+  let self_decoder = function
+    | 'X' -> Lose
+    | 'Y' -> Draw
+    | 'Z' -> Win
+    | other -> failwith (Format.sprintf "unknown char: %c" other)
+  in
+
+  (* self must choose the appropriate shape based on the desired outcome *)
+  let choice (opp, outcome) = match (opp, outcome) with
+    | Roc, Win -> Roc, Pap
+    | Pap, Win -> Pap, Sci
+    | Sci, Win -> Sci, Roc
+    | Roc, Lose -> Roc, Sci
+    | Pap, Lose -> Pap, Roc
+    | Sci, Lose -> Sci, Pap
+    | shape, _ -> shape, shape
+  in
+
+  let opp = opp_decoder s.[0] in
+  let outcome = self_decoder s.[2] in
+  choice (opp, outcome)
+
+
 let part1 str =
   str
     |> String.trim
     |> String.split_on_char '\n'
-    |> List.map decode
+    |> List.map decode1
+    |> List.map score
+    |> sum
+
+let part2 str =
+  str
+    |> String.trim
+    |> String.split_on_char '\n'
+    |> List.map decode2
     |> List.map score
     |> sum
 
 let () =
   let input = read_file Sys.argv.(1) in
 
-  Format.printf "Part 1: %d\n" (part1 input)
+  Format.printf "Part 1: %d\n" (part1 input);
+  Format.printf "Part 2: %d\n" (part2 input)
