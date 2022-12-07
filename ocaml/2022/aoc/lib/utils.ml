@@ -19,3 +19,19 @@ let take k lst =
   in
   go k lst []
 (** [take] returns the first [k] items from the [lst] *)
+
+let chunk i seq =
+  let first = List.of_seq (Seq.take i seq) in
+  let rest = Seq.drop i seq in
+  first, rest
+(** [chunk] returns the first [i] items from the [seq] along with the remainder of the sequence *)
+
+let chunks i seq =
+  let rec go i seq acc = match chunk i seq with
+    | [], _ -> acc
+    | xs, rest -> go i rest (xs::acc)
+  in
+  (* reversal is needed due to the recursive expansion *)
+  List.rev (go i seq [])
+(** [chunks] exhausts the sequence returning a list with the items grouped
+    in individual lists each of size [i] *)
