@@ -6,8 +6,8 @@ use std::fs::read_to_string;
 
 fn part1(s: &str) {
     let chars = s.chars().collect::<Vec<_>>();
-    let windows = chars.windows(4);
-    let markers: Vec<_> = windows
+    let indexes: Vec<_> = chars
+        .windows(4)
         .enumerate()
         .filter_map(|(i, w)| {
             let set: HashSet<_, RandomState> = HashSet::from_iter(w);
@@ -20,10 +20,11 @@ fn part1(s: &str) {
                 None
             }
         })
+        // we only care about the first marker occurrence; discard the rest
         .take(1)
         .collect();
 
-    let i = markers[0];
+    let i = indexes[0];
     println!("Part I: {i}");
 }
 
