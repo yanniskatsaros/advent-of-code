@@ -36,17 +36,19 @@ impl Range {
     fn contains(&self, other: &Self) -> bool {
         (self.min <= other.min) & (self.max >= other.max)
     }
+
+    fn overlaps(&self, other: &Self) -> bool {
+        ((self.min <= other.min) & (self.max >= other.min))
+            | ((self.min <= other.max) & (self.max >= other.max))
+            | other.contains(&self)
+    }
 }
 
 fn either_contains(a: &Range, b: &Range) -> bool {
     a.contains(b) | b.contains(a)
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
-    let args: Vec<String> = env::args().collect();
-    let path = &args[1];
-    let input = read_to_string(path)?.trim().to_string();
-
+fn part1(input: &String) -> Result<(), Box<dyn Error>> {
     let total: i32 = input
         .split('\n')
         .into_iter()
@@ -60,6 +62,34 @@ fn main() -> Result<(), Box<dyn Error>> {
         .sum();
 
     println!("Part I: {total}");
+    Ok(())
+}
+
+fn part2(input: &String) -> Result<(), Box<dyn Error>> {
+    let total: i32 = input
+        .split('\n')
+        .into_iter()
+        .map(|s| {
+            let (a, b) = Range::parse_pair(s);
+            match a.overlaps(&b) {
+                true => 1,
+                false => 0,
+            }
+        })
+        .sum();
+
+    println!("Part II: {total}");
+    Ok(())
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let args: Vec<String> = env::args().collect();
+    let path = &args[1];
+    let input = read_to_string(path)?.trim().to_string();
+
+    part1(&input)?;
+    part2(&input)?;
+
     Ok(())
 }
 
@@ -82,5 +112,60 @@ mod tests {
         let b = Range { min: 3, max: 4 };
 
         assert_eq!(Range::parse_pair(pair), (a, b))
+    }
+
+    #[test]
+    fn test_contains() {
+        //    0 1 2 3 4 5
+        // a: - * * * * -
+        // b: - - * * - -
+        let a = Range { min: 1, max: 4 };
+        let b = Range { min: 2, max: 3 };
+
+        assert!(a.contains(&b));
+    }
+
+    #[test]
+    fn test_no_overlaps() {
+        //    0 1 2 3 4 5 6 7 8
+        // a: - - * * * - - - -
+        // b: - - - - - - * * *
+        let a = Range { min: 2, max: 4 };
+        let b = Range { min: 6, max: 8 };
+        assert!(!a.overlaps(&b));
+        assert!(!b.overlaps(&a));
+    }
+
+    #[test]
+    fn test_overlaps_partial() {
+        //    0 1 2 3 4 5
+        // a: - * * * - -
+        // b: - - * * * -
+        let a = Range { min: 1, max: 3 };
+        let b = Range { min: 2, max: 4 };
+        assert!(a.overlaps(&b));
+        assert!(b.overlaps(&a));
+    }
+
+    #[test]
+    fn test_overlaps_boundary() {
+        //    4 5 6 7 8 9
+        // a: - * * * - -
+        // b: - - - * * *
+        let a = Range { min: 5, max: 7 };
+        let b = Range { min: 7, max: 9 };
+        assert!(a.overlaps(&b));
+        assert!(b.overlaps(&a));
+    }
+
+    #[test]
+    fn test_overlaps_enclosed() {
+        //    0 1 2 3 4 5 6 7 8
+        // a: - - * * * * * * *
+        // b: - - - * * * * * -
+        let a = Range { min: 2, max: 8 };
+        let b = Range { min: 3, max: 7 };
+        assert!(a.overlaps(&b));
+        assert!(b.overlaps(&a));
     }
 }
