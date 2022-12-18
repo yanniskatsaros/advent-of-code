@@ -12,6 +12,7 @@ enum Command {
 struct Cpu {
     x: i32,
     cycle: u32,
+    image: String,
 }
 
 #[derive(Debug)]
@@ -21,7 +22,30 @@ struct Signal {
 
 impl Cpu {
     fn new() -> Self {
-        Self { x: 1, cycle: 0 }
+        Self {
+            x: 1,
+            cycle: 0,
+            image: String::new(),
+        }
+    }
+
+    fn draw(&mut self) {
+        let i = self.x - 1;
+        let j = self.x + 1;
+        let crt = ((self.cycle as i32) - 1) % 40;
+
+        if (crt >= i) && (crt <= j) {
+            self.image.push_str("#");
+        } else {
+            self.image.push_str(".");
+        }
+
+        match self.cycle {
+            40 | 80 | 120 | 160 | 200 | 240 => {
+                self.image.push_str("\n");
+            }
+            _ => (),
+        }
     }
 
     fn signal_strength(&self) -> i32 {
@@ -43,13 +67,16 @@ impl Cpu {
         match cmd {
             Noop => {
                 self.cycle += 1;
+                self.draw();
                 self.signal()
             }
             Addx(i) => {
                 self.cycle += 1;
+                self.draw();
                 let sig1 = self.signal();
 
                 self.cycle += 1;
+                self.draw();
                 let sig2 = self.signal();
 
                 self.x += i;
@@ -76,11 +103,16 @@ impl Command {
     }
 }
 
-fn part1(input: &String) -> Result<(), Box<dyn Error>> {
+fn main() -> Result<(), Box<dyn Error>> {
+    let args: Vec<String> = env::args().collect();
+    let path = &args[1];
+
     let mut cpu = Cpu::new();
     let mut signals = vec![];
 
-    let cmds = input
+    let cmds = read_to_string(path)?
+        .trim()
+        .to_string()
         .split("\n")
         .into_iter()
         .flat_map(Command::from)
@@ -94,16 +126,7 @@ fn part1(input: &String) -> Result<(), Box<dyn Error>> {
 
     let total: i32 = signals.into_iter().map(|s| s.strength).sum();
     println!("Part I: {total}");
-
-    Ok(())
-}
-
-fn main() -> Result<(), Box<dyn Error>> {
-    let args: Vec<String> = env::args().collect();
-    let path = &args[1];
-    let input = read_to_string(path)?.trim().to_string();
-
-    part1(&input)?;
+    println!("Part II:\n\n{}", cpu.image);
 
     Ok(())
 }
