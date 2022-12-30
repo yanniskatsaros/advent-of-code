@@ -274,6 +274,7 @@ fn grid_boundary(op: &OccupiedPoints) -> GridBoundary {
 }
 
 /// Draws an `m x n` grid of the occupied points in the given grove
+#[allow(dead_code)]
 fn draw_grove(op: &OccupiedPoints) {
     // ( 0,  0) the origin, is the upper-left most point in our coordinate system
     // ( 0, -1) is one unit North of the origin
@@ -304,13 +305,13 @@ fn empty_tiles(op: &OccupiedPoints) -> u32 {
     gb.empty_spaces(op)
 }
 
-fn simulate(occupied: &OccupiedPoints, rounds: u32) -> OccupiedPoints {
-    fn rotate(
-        ds: (Direction, Direction, Direction, Direction),
-    ) -> (Direction, Direction, Direction, Direction) {
-        (ds.1, ds.2, ds.3, ds.0)
-    }
+fn rotate(
+    ds: (Direction, Direction, Direction, Direction),
+) -> (Direction, Direction, Direction, Direction) {
+    (ds.1, ds.2, ds.3, ds.0)
+}
 
+fn simulate(occupied: &OccupiedPoints, rounds: u32) -> OccupiedPoints {
     let mut directions = (Direction::N, Direction::S, Direction::W, Direction::E);
     let mut occupied = occupied.clone();
 
@@ -327,6 +328,33 @@ fn simulate(occupied: &OccupiedPoints, rounds: u32) -> OccupiedPoints {
     occupied
 }
 
+fn part1(op: &OccupiedPoints) {
+    let occupied = simulate(&op, 10);
+    println!("Part I: {}", empty_tiles(&occupied));
+}
+
+fn part2(op: &OccupiedPoints) {
+    let mut directions = (Direction::N, Direction::S, Direction::W, Direction::E);
+    let mut prev = op.clone();
+    let mut curr = op.clone();
+
+    // start counting rounds from 1 onwards
+    for i in 1.. {
+        let proposed = curr
+            .iter()
+            .map(|p| p.propose_move(&curr, directions))
+            .collect::<Vec<_>>();
+        curr = accept_reject(&proposed);
+
+        if prev == curr {
+            println!("Part II: {i}");
+            break;
+        }
+        directions = rotate(directions);
+        prev = curr.clone();
+    }
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     let path = &args[1];
@@ -334,11 +362,7 @@ fn main() {
 
     // initial state (round 0)
     let occupied = parse_grove_scan(&input);
-    draw_grove(&occupied);
 
-    // state after 10 rounds
-    let occupied = simulate(&occupied, 10);
-    draw_grove(&occupied);
-
-    println!("Part I: {}", empty_tiles(&occupied));
+    part1(&occupied);
+    part2(&occupied);
 }
