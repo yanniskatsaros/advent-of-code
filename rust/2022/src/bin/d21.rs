@@ -3,28 +3,35 @@ use std::env;
 use std::fs::read_to_string;
 use std::str::FromStr;
 
-#[derive(Debug, PartialEq)]
-enum DeferredExpr {
-    Num(i64),
+#[derive(Debug, PartialEq, Clone)]
+struct Ref(String);
+
+#[derive(Debug, PartialEq, Clone)]
+enum Expr {
+    Num(String, i64),
     // assumes there are never mixed expressions such as
     // a + 1 or 2 + 2 or else we'd need to box each branch
-    Add(String, String),
-    Sub(String, String),
-    Mul(String, String),
-    Div(String, String),
+    Add(String, Ref, Ref),
+    Sub(String, Ref, Ref),
+    Mul(String, Ref, Ref),
+    Div(String, Ref, Ref),
 }
 
-impl FromStr for DeferredExpr {
+impl FromStr for Expr {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let parts: Vec<_> = s.split_whitespace().collect();
+        let (name, expr) = s
+            .split_once(":")
+            .ok_or(format!("Invalid expression: {s}"))?;
+        let name = name.to_string();
 
+        let parts: Vec<_> = expr.split_whitespace().collect();
         match parts.len() {
             1 => {
                 let e = parts[0].trim();
                 if let Ok(i) = e.parse::<i64>() {
-                    Ok(DeferredExpr::Num(i))
+                    Ok(Expr::Num(name, i))
                 } else {
                     Err(format!("Invalid value, expected integer found: {}", e))
                 }
@@ -33,21 +40,25 @@ impl FromStr for DeferredExpr {
                 let (lhs, op, rhs) = (parts[0], parts[1], parts[2]);
 
                 match op.trim() {
-                    "+" => Ok(DeferredExpr::Add(
-                        lhs.trim().to_string(),
-                        rhs.trim().to_string(),
+                    "+" => Ok(Expr::Add(
+                        name,
+                        Ref(lhs.trim().to_string()),
+                        Ref(rhs.trim().to_string()),
                     )),
-                    "-" => Ok(DeferredExpr::Sub(
-                        lhs.trim().to_string(),
-                        rhs.trim().to_string(),
+                    "-" => Ok(Expr::Sub(
+                        name,
+                        Ref(lhs.trim().to_string()),
+                        Ref(rhs.trim().to_string()),
                     )),
-                    "*" => Ok(DeferredExpr::Mul(
-                        lhs.trim().to_string(),
-                        rhs.trim().to_string(),
+                    "*" => Ok(Expr::Mul(
+                        name,
+                        Ref(lhs.trim().to_string()),
+                        Ref(rhs.trim().to_string()),
                     )),
-                    "/" => Ok(DeferredExpr::Div(
-                        lhs.trim().to_string(),
-                        rhs.trim().to_string(),
+                    "/" => Ok(Expr::Div(
+                        name,
+                        Ref(lhs.trim().to_string()),
+                        Ref(rhs.trim().to_string()),
                     )),
                     _ => Err(format!(
                         "Invalid expression operator `{}` in expression: {}",
@@ -60,22 +71,12 @@ impl FromStr for DeferredExpr {
     }
 }
 
-fn parse_line(s: &str) -> Option<(String, DeferredExpr)> {
-    let (name, expr) = s.split_once(":")?;
-
-    if let Ok(e) = expr.parse::<DeferredExpr>() {
-        Some((name.to_string(), e))
-    } else {
-        None
-    }
-}
-
-fn eval(vars: &HashMap<String, DeferredExpr>, expr: &DeferredExpr) -> Result<i64, String> {
-    use DeferredExpr::*;
+fn eval(vars: &HashMap<String, Expr>, expr: &Expr) -> Result<i64, String> {
+    use Expr::*;
 
     match expr {
-        Num(i) => Ok(i.to_owned()),
-        Add(lhs, rhs) => {
+        Num(_, i) => Ok(i.to_owned()),
+        Add(_, Ref(lhs), Ref(rhs)) => {
             let lhs = vars
                 .get(lhs)
                 .ok_or(format!("Undeclared variable: {}", lhs))?;
@@ -85,7 +86,7 @@ fn eval(vars: &HashMap<String, DeferredExpr>, expr: &DeferredExpr) -> Result<i64
 
             Ok(eval(vars, lhs)? + eval(vars, rhs)?)
         }
-        Sub(lhs, rhs) => {
+        Sub(_, Ref(lhs), Ref(rhs)) => {
             let lhs = vars
                 .get(lhs)
                 .ok_or(format!("Undeclared variable: {}", lhs))?;
@@ -95,7 +96,7 @@ fn eval(vars: &HashMap<String, DeferredExpr>, expr: &DeferredExpr) -> Result<i64
 
             Ok(eval(vars, lhs)? - eval(vars, rhs)?)
         }
-        Mul(lhs, rhs) => {
+        Mul(_, Ref(lhs), Ref(rhs)) => {
             let lhs = vars
                 .get(lhs)
                 .ok_or(format!("Undeclared variable: {}", lhs))?;
@@ -105,7 +106,7 @@ fn eval(vars: &HashMap<String, DeferredExpr>, expr: &DeferredExpr) -> Result<i64
 
             Ok(eval(vars, lhs)? * eval(vars, rhs)?)
         }
-        Div(lhs, rhs) => {
+        Div(_, Ref(lhs), Ref(rhs)) => {
             let lhs = vars
                 .get(lhs)
                 .ok_or(format!("Undeclared variable: {}", lhs))?;
@@ -126,8 +127,17 @@ fn main() {
     let vars = input
         .trim()
         .split("\n")
-        .filter_map(parse_line)
-        .collect::<HashMap<String, DeferredExpr>>();
+        .filter_map(|s| {
+            let expr = Expr::from_str(s).ok()?;
+            match &expr {
+                Expr::Num(name, _) => Some((name.clone(), expr.clone())),
+                Expr::Add(name, _, _)
+                | Expr::Sub(name, _, _)
+                | Expr::Mul(name, _, _)
+                | Expr::Div(name, _, _) => Some((name.clone(), expr.clone())),
+            }
+        })
+        .collect::<HashMap<String, Expr>>();
 
     let root = vars.get("root").unwrap();
     let result = eval(&vars, root).unwrap();
@@ -139,35 +149,72 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_line() {
-        let (name, expr) = parse_line("x: 5").unwrap();
+    fn test_parse_expr_num() {
+        let expr = Expr::from_str("x: 5").unwrap();
+
+        let (name, i) = match &expr {
+            Expr::Num(name, i) => (name, *i),
+            _ => panic!(),
+        };
 
         assert_eq!(name, "x");
-        assert_eq!(expr, DeferredExpr::Num(5));
+        assert_eq!(i, 5 as i64);
     }
 
     #[test]
-    fn test_def_expr_add() {
-        let expr = "a + b".parse::<DeferredExpr>().unwrap();
-        assert_eq!(expr, DeferredExpr::Add("a".to_string(), "b".to_string()));
+    fn test_parse_expr_add() {
+        let expr = Expr::from_str("x: a + b").unwrap();
+
+        let (name, lhs, rhs) = match &expr {
+            Expr::Add(name, l, r) => (name, l.clone(), r.clone()),
+            _ => panic!(),
+        };
+
+        assert_eq!(name, "x");
+        assert_eq!(lhs, Ref("a".to_string()));
+        assert_eq!(rhs, Ref("b".to_string()));
     }
 
     #[test]
-    fn test_def_expr_sub() {
-        let expr = "a - b".parse::<DeferredExpr>().unwrap();
-        assert_eq!(expr, DeferredExpr::Sub("a".to_string(), "b".to_string()));
+    fn test_parse_expr_sub() {
+        let expr = Expr::from_str("x: a - b").unwrap();
+
+        let (name, lhs, rhs) = match &expr {
+            Expr::Sub(name, l, r) => (name, l.clone(), r.clone()),
+            _ => panic!(),
+        };
+
+        assert_eq!(name, "x");
+        assert_eq!(lhs, Ref("a".to_string()));
+        assert_eq!(rhs, Ref("b".to_string()));
     }
 
     #[test]
-    fn test_def_expr_mul() {
-        let expr = "a * b".parse::<DeferredExpr>().unwrap();
-        assert_eq!(expr, DeferredExpr::Mul("a".to_string(), "b".to_string()));
+    fn test_parse_expr_mul() {
+        let expr = Expr::from_str("x: a * b").unwrap();
+
+        let (name, lhs, rhs) = match &expr {
+            Expr::Mul(name, l, r) => (name, l.clone(), r.clone()),
+            _ => panic!(),
+        };
+
+        assert_eq!(name, "x");
+        assert_eq!(lhs, Ref("a".to_string()));
+        assert_eq!(rhs, Ref("b".to_string()));
     }
 
     #[test]
-    fn test_def_expr_div() {
-        let expr = "a / b".parse::<DeferredExpr>().unwrap();
-        assert_eq!(expr, DeferredExpr::Div("a".to_string(), "b".to_string()));
+    fn test_parse_expr_div() {
+        let expr = Expr::from_str("x: a / b").unwrap();
+
+        let (name, lhs, rhs) = match &expr {
+            Expr::Div(name, l, r) => (name, l.clone(), r.clone()),
+            _ => panic!(),
+        };
+
+        assert_eq!(name, "x");
+        assert_eq!(lhs, Ref("a".to_string()));
+        assert_eq!(rhs, Ref("b".to_string()));
     }
 
     #[test]
@@ -175,18 +222,18 @@ mod tests {
         let vars = [
             (
                 "x".to_string(),
-                DeferredExpr::Add("a".to_string(), "b".to_string()),
+                Expr::Add("x".to_string(), Ref("a".to_string()), Ref("b".to_string())),
             ),
-            ("d".to_string(), DeferredExpr::Num(10)),
-            ("c".to_string(), DeferredExpr::Num(1)),
+            ("d".to_string(), Expr::Num("d".to_string(), 10)),
+            ("c".to_string(), Expr::Num("c".to_string(), 1)),
             (
                 "a".to_string(),
-                DeferredExpr::Mul("c".to_string(), "d".to_string()),
+                Expr::Mul("a".to_string(), Ref("c".to_string()), Ref("d".to_string())),
             ),
-            ("b".to_string(), DeferredExpr::Num(5)),
+            ("b".to_string(), Expr::Num("b".to_string(), 5)),
         ]
         .into_iter()
-        .collect::<HashMap<String, DeferredExpr>>();
+        .collect::<HashMap<String, Expr>>();
 
         let root = vars.get("x").unwrap();
         let result = eval(&vars, &root).unwrap();
