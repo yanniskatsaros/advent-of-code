@@ -17,6 +17,28 @@ enum Expr {
     Div(String, Ref, Ref),
 }
 
+impl Expr {
+    /// Returns `true` if the expression tree has a branch with a variable name matching the given `target` name
+    fn contains(&self, vars: &HashMap<String, Self>, target: &str) -> Result<bool, String> {
+        match self {
+            Self::Num(name, _) => Ok(name == target),
+            Self::Add(_, Ref(lhs), Ref(rhs))
+            | Self::Sub(_, Ref(lhs), Ref(rhs))
+            | Self::Mul(_, Ref(lhs), Ref(rhs))
+            | Self::Div(_, Ref(lhs), Ref(rhs)) => {
+                let lhs = vars
+                    .get(lhs)
+                    .ok_or(format!("Undeclared variable: {}", lhs))?;
+                let rhs = vars
+                    .get(rhs)
+                    .ok_or(format!("Undeclared variable: {}", rhs))?;
+
+                Ok(lhs.contains(vars, target)? || rhs.contains(vars, target)?)
+            }
+        }
+    }
+}
+
 impl FromStr for Expr {
     type Err = String;
 
@@ -119,11 +141,144 @@ fn eval(vars: &HashMap<String, Expr>, expr: &Expr) -> Result<i64, String> {
     }
 }
 
+fn solve(
+    vars: &HashMap<String, Expr>,
+    expr: &Expr,
+    unknown: &str,
+    target: i64,
+) -> Result<i64, String> {
+    use Expr::*;
+
+    match expr {
+        Num(name, _) => {
+            if name == unknown {
+                Ok(target)
+            } else {
+                Err("not sure how we got here".to_string())
+            }
+        }
+        Add(_, Ref(lhs), Ref(rhs)) => {
+            let lhs = vars
+                .get(lhs)
+                .ok_or(format!("Undeclared variable: {}", lhs))?;
+            let rhs = vars
+                .get(rhs)
+                .ok_or(format!("Undeclared variable: {}", rhs))?;
+
+            if lhs.contains(vars, unknown)? {
+                let rhs = eval(vars, rhs)?;
+                let target = target - rhs;
+                solve(vars, lhs, unknown, target)
+            } else if rhs.contains(vars, unknown)? {
+                let lhs = eval(vars, lhs)?;
+                let target = target - lhs;
+                solve(vars, rhs, unknown, target)
+            } else {
+                Err(format!("Unknown variable: {unknown}"))
+            }
+        }
+        Sub(_, Ref(lhs), Ref(rhs)) => {
+            let lhs = vars
+                .get(lhs)
+                .ok_or(format!("Undeclared variable: {}", lhs))?;
+            let rhs = vars
+                .get(rhs)
+                .ok_or(format!("Undeclared variable: {}", rhs))?;
+
+            if lhs.contains(vars, unknown)? {
+                let rhs = eval(vars, rhs)?;
+                let target = target + rhs;
+                solve(vars, lhs, unknown, target)
+            } else if rhs.contains(vars, unknown)? {
+                let lhs = eval(vars, lhs)?;
+                let target = lhs - target;
+                solve(vars, rhs, unknown, target)
+            } else {
+                Err(format!("Unknown variable: {unknown}"))
+            }
+        }
+        Mul(_, Ref(lhs), Ref(rhs)) => {
+            let lhs = vars
+                .get(lhs)
+                .ok_or(format!("Undeclared variable: {}", lhs))?;
+            let rhs = vars
+                .get(rhs)
+                .ok_or(format!("Undeclared variable: {}", rhs))?;
+
+            if lhs.contains(vars, unknown)? {
+                let rhs = eval(vars, rhs)?;
+                let target = target / rhs;
+                solve(vars, lhs, unknown, target)
+            } else if rhs.contains(vars, unknown)? {
+                let lhs = eval(vars, lhs)?;
+                let target = target / lhs;
+                solve(vars, rhs, unknown, target)
+            } else {
+                Err(format!("Unknown variable: {unknown}"))
+            }
+        }
+        Div(_, Ref(lhs), Ref(rhs)) => {
+            let lhs = vars
+                .get(lhs)
+                .ok_or(format!("Undeclared variable: {}", lhs))?;
+            let rhs = vars
+                .get(rhs)
+                .ok_or(format!("Undeclared variable: {}", rhs))?;
+
+            if lhs.contains(vars, unknown)? {
+                let rhs = eval(vars, rhs)?;
+                let target = target * rhs;
+                solve(vars, lhs, unknown, target)
+            } else if rhs.contains(vars, unknown)? {
+                let lhs = eval(vars, lhs)?;
+                let target = lhs / target;
+                solve(vars, rhs, unknown, target)
+            } else {
+                Err(format!("Unknown variable: {unknown}"))
+            }
+        }
+    }
+}
+
+fn part1(vars: &HashMap<String, Expr>) {
+    let root = vars.get("root").unwrap();
+    let result = eval(&vars, root).unwrap();
+    println!("Part I: {result}");
+}
+
+fn part2(vars: &HashMap<String, Expr>) {
+    let unknown = "humn";
+    let root = vars.get("root").unwrap();
+    let result = match root {
+        Expr::Add(_, Ref(lhs), Ref(rhs)) => {
+            let lhs = vars
+                .get(lhs)
+                .ok_or(format!("Undeclared variable: {}", lhs))
+                .unwrap();
+            let rhs = vars
+                .get(rhs)
+                .ok_or(format!("Undeclared variable: {}", rhs))
+                .unwrap();
+
+            if lhs.contains(vars, unknown).unwrap() {
+                let target = eval(vars, rhs).unwrap();
+                solve(vars, lhs, unknown, target).unwrap()
+            } else if rhs.contains(vars, unknown).unwrap() {
+                let target = eval(vars, lhs).unwrap();
+                solve(vars, rhs, unknown, target).unwrap()
+            } else {
+                panic!("No binding found: humn");
+            }
+        }
+        _ => unreachable!(),
+    };
+    println!("Part II: {result}");
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     let path = &args[1];
     let input = read_to_string(path).unwrap();
-
     let vars = input
         .trim()
         .split("\n")
@@ -139,9 +294,8 @@ fn main() {
         })
         .collect::<HashMap<String, Expr>>();
 
-    let root = vars.get("root").unwrap();
-    let result = eval(&vars, root).unwrap();
-    dbg!(result);
+    part1(&vars);
+    part2(&vars);
 }
 
 #[cfg(test)]
