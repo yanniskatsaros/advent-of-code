@@ -1,4 +1,5 @@
 use rand::{rngs::ThreadRng, seq::IteratorRandom};
+use regex::Regex;
 
 #[derive(Clone, Debug)]
 struct Ore(u64);
@@ -256,6 +257,7 @@ fn simulate(bp: &Blueprint, n: u64) -> Geode {
     (0..=n).map(|_| simulate_one()).max_by_key(|g| g.0).unwrap()
 }
 
+#[allow(dead_code)]
 fn test() {
     let bp = Blueprint {
         id: 1,
@@ -279,6 +281,45 @@ fn test() {
     println!("Blueprint {}: geodes = {}", bp.id, n);
 }
 
+fn parse_blueprint(re: &Regex, spec: &str) -> Blueprint {
+    let captures = re
+        .captures(spec)
+        .expect(format!("Failed to parse blueprint spec: {}", spec).as_str());
+
+    Blueprint {
+        id: captures[1].parse::<u64>().unwrap(),
+        ore: Ore(captures[2].parse::<u64>().unwrap()),
+        clay: Ore(captures[3].parse::<u64>().unwrap()),
+        obsidian: (
+            Ore(captures[4].parse::<u64>().unwrap()),
+            Clay(captures[5].parse::<u64>().unwrap()),
+        ),
+        geode: (
+            Ore(captures[6].parse::<u64>().unwrap()),
+            Obsidian(captures[7].parse::<u64>().unwrap()),
+        ),
+    }
+}
+
+fn load_blueprints(path: &str) -> Vec<Blueprint> {
+    let re = Regex::new(r"\D+(\d+)\D+(\d+)\D+(\d+)\D+(\d+)\D+(\d+)\D+(\d+)\D+(\d+)\D+").unwrap();
+    let inputs = std::fs::read_to_string(path).unwrap();
+
+    inputs
+        .trim()
+        .split("\n")
+        .map(|spec| parse_blueprint(&re, spec))
+        .collect::<Vec<_>>()
+}
+
 fn main() {
-    test();
+    let args: Vec<String> = std::env::args().collect();
+    let path = &args[1];
+    let blueprints = load_blueprints(path);
+    let n_runs = 5_000_000;
+
+    for bp in blueprints.iter() {
+        let Geode(n) = simulate(bp, n_runs);
+        println!("Blueprint {}: geodes = {}", bp.id, n);
+    }
 }
