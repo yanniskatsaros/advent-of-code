@@ -1,3 +1,5 @@
+use rand::{rngs::ThreadRng, seq::IteratorRandom};
+
 #[derive(Clone, Debug)]
 struct Ore(u64);
 
@@ -184,48 +186,13 @@ fn robot_builds_available(bp: &Blueprint, resources: &Resources) -> Vec<Robot> {
         .collect::<Vec<Robot>>()
 }
 
-fn best_action(
-    choices: Vec<Robot>,
-    bp: &Blueprint,
-    robots: &Vec<Robot>,
-    resources: &Resources,
-    t: u64,
-    time_limit: u64,
-) -> Option<Robot> {
-    let (best, _) = choices
+fn random_action(choices: Vec<Robot>, rng: &mut ThreadRng) -> Option<Robot> {
+    choices
         .into_iter()
         .map(|r| Some(r))
-        .chain([None]) // this is needed for the "no robot purchase" option
-        .map(|r| {
-            let mut robots = robots.clone();
-            let mut resources = resources.clone();
-
-            if let Some(ref robot) = r {
-                // spend the resources at the top of the minute
-                resources.purchase(&robot, bp);
-
-                // harvest each robot's resources
-                for robot in robots.iter() {
-                    robot.harvest_into(&mut resources);
-                }
-
-                // the new robot is ready to be added to the fleet
-                robots.push(robot.clone());
-            } else {
-                // this the case where there is no new robot purchased
-                // we just need to harvest resources for the existing robots
-                for robot in robots.iter() {
-                    robot.harvest_into(&mut resources);
-                }
-            }
-
-            let Geode(n) = harvest(bp, &mut robots, &mut resources, t + 1, time_limit);
-            (r, n)
-        })
-        .max_by_key(|x| x.1) // choose the action that maximizes the number of geodes harvested
-        .expect("Cannot choose action from empty set!");
-
-    best
+        .chain([None])
+        .choose(rng)
+        .expect("Cannot choose action from empty set!")
 }
 
 fn harvest(
@@ -234,6 +201,7 @@ fn harvest(
     resources: &mut Resources,
     t: u64,
     time_limit: u64,
+    rng: &mut ThreadRng,
 ) -> Geode {
     let mut pending_robot: Option<Robot> = None;
 
@@ -245,7 +213,8 @@ fn harvest(
 
         // a decision needs to be made on whether to purchase a robot, or wait to save resources for
         // the future for a (potentially) different robot to purchase
-        let action = best_action(available, bp, robots, resources, t, time_limit);
+        // let action = best_action(available, bp, robots, resources, t, time_limit);
+        let action = random_action(available, rng);
         if let Some(new_robot) = action {
             resources.purchase(&new_robot, bp);
             pending_robot = Some(new_robot);
@@ -265,13 +234,29 @@ fn harvest(
     }
 
     if t < time_limit {
-        harvest(bp, robots, resources, t + 1, time_limit)
+        harvest(bp, robots, resources, t + 1, time_limit, rng)
     } else {
         resources.geode.clone()
     }
 }
 
-fn main() {
+fn simulate(bp: &Blueprint, n: u64) -> Geode {
+    let mut rng = rand::thread_rng();
+
+    let mut simulate_one = || {
+        // we have one Ore collecting robot to begin
+        let mut robots = vec![Robot::Ore];
+
+        // and have no resources initally
+        let mut resources = Resources::new();
+
+        harvest(&bp, &mut robots, &mut resources, 0, 24, &mut rng)
+    };
+
+    (0..=n).map(|_| simulate_one()).max_by_key(|g| g.0).unwrap()
+}
+
+fn test() {
     let bp = Blueprint {
         id: 1,
         ore: Ore(4),
@@ -279,14 +264,21 @@ fn main() {
         obsidian: (Ore(3), Clay(14)),
         geode: (Ore(2), Obsidian(7)),
     };
-    println!("Simulate using Blueprint: {}", bp.id);
+    let Geode(n) = simulate(&bp, 1_000_000);
+    println!("Blueprint {}: geodes = {}", bp.id, n);
 
-    // we have one Ore collecting robot to begin
-    let mut robots = vec![Robot::Ore];
+    let bp = Blueprint {
+        id: 2,
+        ore: Ore(2),
+        clay: Ore(3),
+        obsidian: (Ore(3), Clay(8)),
+        geode: (Ore(3), Obsidian(12)),
+    };
 
-    // and have no resources initally
-    let mut resources = Resources::new();
+    let Geode(n) = simulate(&bp, 1_000_000);
+    println!("Blueprint {}: geodes = {}", bp.id, n);
+}
 
-    let geodes = harvest(&bp, &mut robots, &mut resources, 0, 24);
-    dbg!(geodes);
+fn main() {
+    test();
 }
