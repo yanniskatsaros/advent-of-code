@@ -318,8 +318,14 @@ fn main() {
     let blueprints = load_blueprints(path);
     let n_runs = 5_000_000;
 
-    for bp in blueprints.iter() {
-        let Geode(n) = simulate(bp, n_runs);
-        println!("Blueprint {}: geodes = {}", bp.id, n);
-    }
+    let total_quality = blueprints
+        .iter()
+        .map(|bp| {
+            let Geode(n) = simulate(bp, n_runs);
+            println!("Blueprint {}: geodes = {}", bp.id, n);
+            bp.id * n
+        })
+        .sum::<u64>();
+
+    println!("Part I: {total_quality:#?}");
 }
