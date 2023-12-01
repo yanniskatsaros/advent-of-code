@@ -1,4 +1,4 @@
-# :christmas_tree: Advent of Code :bell:
+# 🎄 Advent of Code 🔔
 
 Let's see how far I get this year...
 
