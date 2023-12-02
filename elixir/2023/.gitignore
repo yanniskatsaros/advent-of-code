@@ -24,3 +24,6 @@ aoc-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# input data for each day's puzzle
+/data/
