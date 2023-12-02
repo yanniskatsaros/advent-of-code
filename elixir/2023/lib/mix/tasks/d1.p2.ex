@@ -1,6 +1,6 @@
-defmodule Mix.Tasks.D1.P1 do
+defmodule Mix.Tasks.D1.P2 do
   @moduledoc """
-  Run the solution for Day 1 Part I
+  Run the solution for Day 1 Part II
   """
   use Mix.Task
 
@@ -12,11 +12,11 @@ defmodule Mix.Tasks.D1.P1 do
     {:ok, input} = File.read(filepath)
 
     if Enum.member?(args, "-b") do
-      Benchee.run(%{part_1: fn -> input |> part1() end})
+      Benchee.run(%{part_2: fn -> input |> part1() end})
     else
       input
-      |> part1()
-      |> IO.inspect(label: "Part 1")
+      |> part2()
+      |> IO.inspect(label: "Part 2")
     end
   end
 end
