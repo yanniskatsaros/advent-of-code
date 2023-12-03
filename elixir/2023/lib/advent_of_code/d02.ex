@@ -104,4 +104,25 @@ defmodule AdventOfCode.D02 do
     |> Enum.map(decode)
     |> Enum.sum()
   end
+
+  @spec part2(binary()) :: integer()
+  def part2(input) do
+    decode =
+      fn line ->
+        [_, draws] = String.split(line, ":")
+
+        # the highest R/G/B value seen across all draws in this game
+        # is equivalent to the minimum required per game
+        draws
+        |> String.split(";", trim: true)
+        |> Enum.map(&RGB.from_line!/1)
+        |> RGB.max()
+        |> then(&(&1.red * &1.green * &1.blue))
+      end
+
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(decode)
+    |> Enum.sum()
+  end
 end
