@@ -20,7 +20,7 @@ defmodule AdventOfCode.D01 do
     digits =
       line
       |> String.trim()
-      |> String.codepoints()
+      |> String.graphemes()
       |> Enum.filter(&digit?/1)
       |> Enum.map(&String.to_integer/1)
 
