@@ -2,7 +2,6 @@ package d01
 
 import (
 	"fmt"
-	"errors"
 	"strconv"
 	"strings"
 
@@ -18,13 +17,13 @@ func applyRotation(instr string, current DialPosition) (DialPosition, error) {
 	// direction: L or R
 
 	invalidInstructionErr := func(instr string) error {
-		return errors.New(fmt.Sprintf("Invalid instruction: %v", instr))
+		return fmt.Errorf("Invalid instruction: %v", instr)
 	}
 
 	runes := []rune(instr)
 
 	if len(runes) == 0 {
-		return current, errors.New(fmt.Sprintf("Empty instruction: %v", instr))
+		return current, fmt.Errorf("Empty instruction: %v", instr)
 	}
 
 	direction := string(runes[0])
@@ -51,7 +50,7 @@ func applyRotation(instr string, current DialPosition) (DialPosition, error) {
 	}
 
 	// if neither L or R this is an invalid instruction
-	return current, errors.New(fmt.Sprintf("Invalid instruction direction: %v", instr))
+	return current, fmt.Errorf("Invalid instruction direction: %v", instr)
 }
 
 
@@ -64,18 +63,23 @@ func Part1() {
 		fmt.Printf("%v", err)
 		return
 	}
+	input = strings.TrimSpace(input)
 	lines := strings.Split(input, "\n")
 
 	// the password is the number of times the dial is left at the 0 position
-	var counter int = 0
+	counter := 0
 
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		
 		dial, err = applyRotation(line, dial)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 
 		if int(dial) == 0 {
-			counter += 1
+			counter++
 		}
 	}
 
