@@ -28,3 +28,6 @@ go.work.sum
 
 # env file
 .env
+
+# data stored locally as input to puzzles
+inputs/**
