@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"yanniskatsaros/aoc/2025/day/d01"
+	"yanniskatsaros/aoc/2025/day/d03"
 	"yanniskatsaros/aoc/2025/utils"
 )
 
@@ -29,6 +30,9 @@ func main() {
 	switch day + part {
 	case "11":
 		d01.Part1()
+
+	case "31":
+		d03.Part1()
 
 	default:
 		fmt.Printf("Day %v Part %v not implemented yet\n", day, part)
