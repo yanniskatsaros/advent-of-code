@@ -1,15 +1,14 @@
 package utils
 
 import (
-	"os"
 	"fmt"
+	"os"
 	"strconv"
 )
 
 func Mod(a, b int) int {
 	return ((a % b) + b) % b
 }
-
 
 func ReadInput(path string) (string, error) {
 	content, err := os.ReadFile(path)

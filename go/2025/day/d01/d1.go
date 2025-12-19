@@ -8,9 +8,7 @@ import (
 	"yanniskatsaros/aoc/2025/utils"
 )
 
-
 type DialPosition int
-
 
 func applyRotation(instr string, current DialPosition) (DialPosition, error) {
 	// instr examples: L68, R60 etc.
@@ -35,7 +33,7 @@ func applyRotation(instr string, current DialPosition) (DialPosition, error) {
 			return current, invalidInstructionErr(instr)
 		}
 
-		new := utils.Mod(int(current) - i, 100)
+		new := utils.Mod(int(current)-i, 100)
 		return DialPosition(new), nil
 	}
 
@@ -45,14 +43,13 @@ func applyRotation(instr string, current DialPosition) (DialPosition, error) {
 			return current, invalidInstructionErr(instr)
 		}
 
-		new := utils.Mod(int(current) + i, 100)
+		new := utils.Mod(int(current)+i, 100)
 		return DialPosition(new), nil
 	}
 
 	// if neither L or R this is an invalid instruction
 	return current, fmt.Errorf("Invalid instruction direction: %v", instr)
 }
-
 
 func Part1() {
 	var dial DialPosition = 50
@@ -71,7 +68,7 @@ func Part1() {
 
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
-		
+
 		dial, err = applyRotation(line, dial)
 		if err != nil {
 			fmt.Println(err)
