@@ -31,3 +31,9 @@ go.work.sum
 
 # data stored locally as input to puzzles
 inputs/**
+
+# output binaries
+bin/
+
+# the default binary name generated (from go.mod)
+2025
