@@ -30,12 +30,12 @@ func MaxJoltage(bank string) (int, error) {
 			continue
 		}
 
-		if i == 1 {
-			maxSecond = digit
-			iMaxSecond = i
-			// fmt.Println("Skip 2")
-			continue
-		}
+		// if i == 1 {
+		// 	maxSecond = digit
+		// 	iMaxSecond = i
+		// 	// fmt.Println("Skip 2")
+		// 	continue
+		// }
 
 		// NOTE: we don't update the first index if this is the last "slot"
 		if (digit > maxFirst) && (i != lastIndex) {
@@ -87,6 +87,9 @@ func Part1() {
 		"811111111111119",
 		"234234234234278",
 		"818181911112111",
+		"281",
+		"2918",
+		"918",
 	}
 
 	totalJoltage := 0
