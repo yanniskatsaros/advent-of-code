@@ -2,74 +2,43 @@ package d03
 
 import (
 	"fmt"
-	"strconv"
+	// "strconv"
 	"strings"
 	"yanniskatsaros/aoc/2025/utils"
 )
 
 func MaxJoltage(bank string) (int, error) {
 	n := len(bank)
-	lastIndex := n - 1
 
-	var maxFirst int
-	var maxSecond int
-	var max int
+	if n < 2 {
+		return -1, fmt.Errorf("Cannot find max joltage for less than 2 digits: %v", bank)
+	}
 
-	var iMaxFirst int
-	var iMaxSecond int
+	maxJoltage := 0
 
-	for i, char := range bank {
-		digit := int(char - '0') // Convert rune to int
-		// fmt.Printf("%v: %d (max = %d%d) (i1, i2 = %d, %d)\n", i, digit, maxFirst, maxSecond, iMaxFirst, iMaxSecond)
+	// the largest **second** digit seen during iteration from right -> left
+	maxSecondDigit := -1
 
-		// incredibly big brained code here:
-		if i == 0 {
-			maxFirst = digit
-			iMaxFirst = i
-			// fmt.Println("Skip 1")
-			continue
-		}
+	// scan from right to left 
+	for i := n - 1; i >= 0; i-- {
+		digit := int(bank[i] - '0')
 
-		// if i == 1 {
-		// 	maxSecond = digit
-		// 	iMaxSecond = i
-		// 	// fmt.Println("Skip 2")
-		// 	continue
-		// }
+		// if we have seen a digit to the right, we can form a pair:
+		if maxSecondDigit != -1 {
+			joltage := digit * 10 + maxSecondDigit
 
-		// NOTE: we don't update the first index if this is the last "slot"
-		if (digit > maxFirst) && (i != lastIndex) {
-			// fmt.Printf("Skip 3: maxFirst = %d, iMaxFirst = %d, digit = %d\n", maxFirst, iMaxFirst, digit)
-			maxFirst = digit
-			iMaxFirst = i
-
-			// NOTE: we need to do another check:
-			// if the index of the first max is > the index of the second max
-			// we need to update the second max to the adjacent char to the right of *this* one:
-
-			if iMaxFirst > iMaxSecond {
-				iMaxSecond = i + 1 // the next index
-				maxSecond = int(bank[iMaxSecond] - '0')
+			if joltage > maxJoltage {
+				maxJoltage = joltage
 			}
-
-			continue
 		}
 
-		if digit > maxSecond {
-			// fmt.Printf("Skip 4: maxSecond = %d, iMaxSecond = %d, digit = %d\n", maxSecond, iMaxSecond, digit)
-			maxSecond = digit
-			iMaxSecond = i
-			continue
+		// save the max digit to the right seen thus far:
+		if digit > maxSecondDigit {
+			maxSecondDigit = digit
 		}
 	}
 
-	var err error
-	max, err = strconv.Atoi(fmt.Sprintf("%d%d", maxFirst, maxSecond))
-	if err != nil {
-		return -1, err
-	}
-
-	return max, nil
+	return maxJoltage, nil
 }
 
 func Part1() {
@@ -81,16 +50,16 @@ func Part1() {
 	input = strings.TrimSpace(input)
 	lines := strings.Split(input, "\n")
 
-	// inline testing
-	lines = []string{
-		"987654321111111",
-		"811111111111119",
-		"234234234234278",
-		"818181911112111",
-		"281",
-		"2918",
-		"918",
-	}
+	// // inline testing
+	// lines = []string{
+	// 	"987654321111111",
+	// 	"811111111111119",
+	// 	"234234234234278",
+	// 	"818181911112111",
+	// 	"281",
+	// 	"2918",
+	// 	"918",
+	// }
 
 	totalJoltage := 0
 
