@@ -1,0 +1,11 @@
+default:
+    just -l
+
+fmt:
+    go fmt ./...
+
+run *args:
+    go run . {{ args }}
+
+test:
+    go test ./...
