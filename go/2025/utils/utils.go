@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 func Mod(a, b int) int {
@@ -17,6 +18,18 @@ func ReadInput(path string) (string, error) {
 	}
 
 	return string(content), nil
+}
+
+func ReadInputLines(path string) ([]string, error) {
+	input, err := ReadInput(path)
+	if err != nil {
+		return nil, err
+	}
+
+	input = strings.TrimSpace(input)
+	lines := strings.Split(input, "\n")
+
+	return lines, nil
 }
 
 func Sandbox() {
