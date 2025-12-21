@@ -2,7 +2,6 @@ package d03
 
 import (
 	"fmt"
-	// "strconv"
 	"strings"
 	"yanniskatsaros/aoc/2025/utils"
 )
@@ -19,13 +18,13 @@ func MaxJoltage(bank string) (int, error) {
 	// the largest **second** digit seen during iteration from right -> left
 	maxSecondDigit := -1
 
-	// scan from right to left 
+	// scan from right to left
 	for i := n - 1; i >= 0; i-- {
 		digit := int(bank[i] - '0')
 
 		// if we have seen a digit to the right, we can form a pair:
 		if maxSecondDigit != -1 {
-			joltage := digit * 10 + maxSecondDigit
+			joltage := digit*10 + maxSecondDigit
 
 			if joltage > maxJoltage {
 				maxJoltage = joltage
@@ -50,17 +49,6 @@ func Part1() {
 	input = strings.TrimSpace(input)
 	lines := strings.Split(input, "\n")
 
-	// // inline testing
-	// lines = []string{
-	// 	"987654321111111",
-	// 	"811111111111119",
-	// 	"234234234234278",
-	// 	"818181911112111",
-	// 	"281",
-	// 	"2918",
-	// 	"918",
-	// }
-
 	totalJoltage := 0
 
 	for _, bank := range lines {
@@ -75,8 +63,6 @@ func Part1() {
 		fmt.Printf("Bank = %v (max = %d)\n", bank, joltage)
 
 		totalJoltage += joltage
-
-		// fmt.Printf("Max Joltage: %d\n", joltage)
 	}
 
 	fmt.Printf("Total Output Joltage: %d\n", totalJoltage)
