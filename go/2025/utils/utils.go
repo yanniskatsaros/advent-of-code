@@ -27,7 +27,7 @@ func Sandbox() {
 
 	i, err := strconv.Atoi(s[1:])
 	if err != nil {
-		fmt.Println("%v", err)
+		fmt.Printf("%v\n", err)
 		return
 	}
 
