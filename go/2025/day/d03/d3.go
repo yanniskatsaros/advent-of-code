@@ -70,12 +70,11 @@ func BestBankSlice(bank string, max int) (string, int) {
 	return newBank, newMax
 }
 
-func MaxJoltageK(bank string, k int) int {
+func MaxJoltageK(bank string, k int) (int, error) {
 	n := len(bank)
 
-	// TODO: lazy error handling for now
 	if n <= k {
-		return -1
+		return -1, fmt.Errorf("MaxJoltageK requires: n = len(bank) > k (got: n = %d, k = %d)", n, k)
 	}
 
 	max := -1
@@ -92,7 +91,7 @@ func MaxJoltageK(bank string, k int) int {
 		// fmt.Printf("out = %v, max = %d\n", bankslice, max)
 	}
 
-	return max
+	return max, nil
 }
 
 func Part1() {
@@ -124,11 +123,6 @@ func Part1() {
 }
 
 func Part2() {
-	// bank := "987654321111111"
-	// bank := "811111111111119"
-	// bank := "234234234234278"
-	// bank := "818181911112111"
-
 	input, err := utils.ReadInput("inputs/day3.txt")
 	if err != nil {
 		fmt.Printf("%v", err)
@@ -142,12 +136,12 @@ func Part2() {
 
 	for _, bank := range lines {
 		bank = strings.TrimSpace(bank)
-		joltage := MaxJoltageK(bank, k)
+		joltage, nil := MaxJoltageK(bank, k)
 
-		// if err != nil {
-		// 	fmt.Errorf("Failed to find max joltage: %v", err)
-		// 	return
-		// }
+		if err != nil {
+			fmt.Errorf("Failed to find max joltage: %v", err)
+			return
+		}
 
 		fmt.Printf("Bank = %v (max = %d)\n", bank, joltage)
 
