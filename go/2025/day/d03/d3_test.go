@@ -34,3 +34,20 @@ func TestMaxJoltage(t *testing.T) {
 		})
 	}
 }
+
+func TestBestBankSlice(t *testing.T) {
+	t.Run("test", func(t *testing.T) {
+		bank := "8119"
+		max := 119
+
+		newBank, newMax := BestBankSlice(bank, max)
+
+		if newBank != "819" {
+			t.Errorf("got = %v, want = %v", newBank, "819")
+		}
+
+		if newMax != 819 {
+			t.Errorf("got = %d, want = %d", newMax, 819)
+		}
+	})
+}
