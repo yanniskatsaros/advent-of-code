@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
+
 	"yanniskatsaros/aoc/2025/day/d01"
 	"yanniskatsaros/aoc/2025/day/d03"
+	"yanniskatsaros/aoc/2025/day/d04"
 	"yanniskatsaros/aoc/2025/utils"
 )
 
@@ -36,6 +38,9 @@ func main() {
 
 	case "32":
 		d03.Part2()
+
+	case "41":
+		d04.Part1()
 
 	default:
 		fmt.Printf("Day %v Part %v not implemented yet\n", day, part)
