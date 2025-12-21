@@ -42,6 +42,9 @@ func main() {
 	case "41":
 		d04.Part1()
 
+	case "42":
+		d04.Part2()
+
 	default:
 		fmt.Printf("Day %v Part %v not implemented yet\n", day, part)
 	}

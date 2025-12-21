@@ -133,6 +133,27 @@ func (g Grid) AdjacentItems(coord Coord) map[Coord]GridItem {
 	return adj
 }
 
+func RemoveRolls(g Grid) (Grid, int) {
+	remove := []Coord{}
+
+	for coord, item := range g.Items() {
+		adj := g.AdjacentItems(coord)
+		count := CountRolls(adj)
+
+		if (item == Roll) && (count < 4) {
+			remove = append(remove, coord)
+		}
+	}
+
+	grid := g.grid
+
+	for _, c := range remove {
+		grid[c] = Empty
+	}
+
+	return Grid{grid: grid, rows: g.rows, cols: g.cols}, len(remove)
+}
+
 func Part1() {
 	diagram, err := utils.ReadInput("inputs/day4.txt")
 	if err != nil {
@@ -161,4 +182,35 @@ func Part1() {
 	}
 
 	fmt.Printf("Total = %v\n", total)
+}
+
+func Part2() {
+	diagram, err := utils.ReadInput("inputs/day4.txt")
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		return
+	}
+
+	diagram = strings.TrimSpace(diagram)
+	grid, err := ParseGridDiagram(diagram)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		return
+	}
+
+	total := 0
+	var removed int
+
+	for {
+		grid, removed = RemoveRolls(grid)
+		total += removed
+
+		if removed == 0 {
+			break
+		}
+
+		// fmt.Printf("removed = %v, total = %v\n", removed, total)
+	}
+
+	fmt.Printf("Total Removed = %v\n", total)
 }
