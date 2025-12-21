@@ -64,3 +64,6 @@ Now, the joltages are much larger:
 - In `23**4**2**34234234278**`, the largest joltage can be found by turning on everything except a 2 battery, a 3 battery, and another 2 battery near the start to produce 434234234278.
 - In 818181911112111, the joltage 888911112111 is produced by turning on everything except some 1s near the front.
 
+The total output joltage is now much larger: 987654321111 + 811111111119 + 434234234278 + 888911112111 = 3121910778619.
+
+**What is the new total output joltage?**
